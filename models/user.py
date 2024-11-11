@@ -1,19 +1,21 @@
 from database.connection import db
-import bcrypt
+from flask_bcrypt import Bcrypt
+from flask_login import UserMixin
 
-class User(db.Model):
+bcrypt = Bcrypt()
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     firstname = db.Column(db.String(80), nullable=False)
     lastname = db.Column(db.String(80), nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
+    is_active = db.Column(db.Boolean, default=True) 
 
     transcriptions = db.relationship('Transcription', backref='user', lazy=True)
-
+    
     def set_password(self, password):
-        salt = bcrypt.gensalt()
-        self.password = bcrypt.hashpw(password.encode("UTF-8"), salt)
+        self.password = bcrypt.generate_password_hash(password)
 
     def check_password(self, password):
-        return bcrypt.checkpw(password.encode("UTF-8"), self.password.encode("UTF-8"))
+        return bcrypt.check_password_hash(self.password, password)

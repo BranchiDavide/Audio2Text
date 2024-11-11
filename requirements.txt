@@ -17,6 +17,8 @@ distro==1.7.0
 distro-info===1.1build1
 filelock==3.16.1
 Flask==3.0.3
+Flask-Bcrypt==1.0.1
+Flask-Login==0.6.3
 Flask-Migrate==4.0.7
 Flask-SQLAlchemy==3.1.1
 fsspec==2024.9.0
@@ -75,6 +77,7 @@ python-apt==2.3.0+ubuntu2.1
 python-dateutil==2.8.1
 python-debian===0.1.43ubuntu1
 python-dotenv==1.0.1
+python-magic==0.4.27
 pytz==2022.1
 pyxdg==0.27
 PyYAML==5.4.1
