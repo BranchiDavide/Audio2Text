@@ -1,10 +1,13 @@
 from flask import Blueprint, jsonify, request
 from utils.filechecker import *
+import gc
 import os
 import uuid
 import time
+
 import whisper
-whisper_model = whisper.load_model("base")
+ALLOWED_MODELS = ["base", "tiny", "small", "medium", "turbo"]
+base_model = whisper.load_model("base")
 
 UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER")
 if not os.path.exists(UPLOAD_FOLDER):
@@ -36,12 +39,24 @@ def create():
     file.save(file_path)
 
     start_time = time.time()
-    transcription = whisper_model.transcribe(file_path)
+    transcription = ""
+    model_name = "base" # Set default model to base
+    if "model" in request.form:
+        model_name = request.form["model"]
+        if model_name not in ALLOWED_MODELS:
+            return jsonify({"status": "error", "message": "Invalid model name. Supported models: " + str(ALLOWED_MODELS)}), 400
+        model = whisper.load_model(model_name)
+        transcription = model.transcribe(file_path)
+        del model
+        gc.collect()
+    else:
+        transcription = base_model.transcribe(file_path)
     end_time = time.time()
     
     return jsonify({
                     "status": "success",
                     "transcription": transcription["text"],
                     "detected_lang": transcription["language"],
-                    "transcription_time": round(end_time - start_time, 2)
+                    "transcription_time": round(end_time - start_time, 2),
+                    "model": model_name
                     }), 200

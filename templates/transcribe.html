@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Transcribe - Audio2Text{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Transcribe Your Audio</h1>
+
+    <form id="transcriptionForm" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="audioFile" class="form-label">Upload Audio File</label>
+            <input type="file" class="form-control" id="audioFile" name="audioFile" accept="audio/*" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="modelSelect" class="form-label">Select Transcription Model</label>
+            <select class="form-select" id="modelSelect" name="model">
+                <option value="base" selected>Base</option>
+                <option value="tiny">Tiny</option>
+                <option value="small">Small</option>
+                <option value="small">Medium</option>
+                <option value="small">Turbo</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Transcribe</button>
+    </form>
+
+    <div id="loadingSpinner" class="mt-4 text-center d-none">
+        <img src="{{url_for('static', filename='img/loading.gif')}}" height="20" alt="Loading..." />
+        <p>Please wait, transcribing your file...</p>
+    </div>
+
+    <div id="results" class="mt-4 d-none">
+        <h3>Transcription Result</h3>
+
+        <div class="mb-2">
+            <span class="badge bg-info me-2" id="detectedLang"></span>
+            <span class="badge bg-secondary" id="transcriptionTime"></span>
+        </div>
+
+        <pre id="transcriptionText" class="p-3 bg-light rounded text-break" style="white-space: pre-wrap;"></pre>
+    </div>
+</div>
+
+<script>
+document.getElementById("transcriptionForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    
+    const formData = new FormData();
+    const fileInput = document.getElementById("audioFile");
+    const modelSelect = document.getElementById("modelSelect");
+    const loadingSpinner = document.getElementById("loadingSpinner");
+
+    formData.append("file", fileInput.files[0]);
+    formData.append("model", modelSelect.value);
+    loadingSpinner.classList.remove("d-none");
+    document.getElementById("results").classList.add("d-none");
+
+    try {
+        const response = await fetch("{{ url_for('api.transcriber.create') }}", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            const resultsDiv = document.getElementById("results");
+            const transcriptionText = document.getElementById("transcriptionText");
+            const detectedLang = document.getElementById("detectedLang");
+            const transcriptionTime = document.getElementById("transcriptionTime");
+
+            transcriptionText.textContent = result.transcription.trim();
+            detectedLang.textContent = `Detected Language: ${result.detected_lang}`;
+            transcriptionTime.textContent = `Time: ${result.transcription_time} seconds`;
+
+            loadingSpinner.classList.add("d-none");
+            resultsDiv.classList.remove("d-none");
+        } else {
+            loadingSpinner.classList.add("d-none");
+            document.getElementById("results").classList.add("d-none");
+            alert(result.message || "An error occurred while transcribing the audio.");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An unexpected error occurred.");
+    }
+});
+</script>
+{% endblock %}

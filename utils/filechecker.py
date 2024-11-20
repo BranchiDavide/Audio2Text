@@ -1,5 +1,5 @@
 import magic
-ALLOWED_EXTENSIONS = {"wav", "mp3", "m4a"}
+ALLOWED_EXTENSIONS = ["wav", "mp3", "m4a"]
 ALLOWED_MIME_TYPES = ["audio/wav", "audio/x-wav", "audio/mpeg3", "audio/mp4", "audio/x-mpeg-3", "audio/m4a", "audio/x-m4a", "audio/mpeg"]
 def allowed_file_ext(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS

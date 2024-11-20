@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from database.connection import db
 from models.user import User
 
@@ -7,6 +7,8 @@ auth = Blueprint("auth", __name__)
 
 @auth.route("/login")
 def login():
+    if current_user.is_authenticated:
+        return redirect("/")
     return render_template("auth/login.html")
 
 @auth.route("/login", methods=["POST"])
@@ -36,6 +38,8 @@ def login_post():
 
 @auth.route("/signup")
 def signup():
+    if current_user.is_authenticated:
+        return redirect("/")
     return render_template("auth/signup.html")
 
 @auth.route("/signup", methods=["POST"])

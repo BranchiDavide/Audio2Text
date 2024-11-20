@@ -2,5 +2,17 @@
 {% block title %}Home - Audio2Text{% endblock %}
 
 {% block content %}
-    <h1>Welcome {{firstname}} {{lastname}}</h1>
+<div class="container text-center mt-5">
+    <h1 class="mb-4">Welcome, {{ firstname }} {{ lastname }}</h1>
+    <div class="d-flex justify-content-center gap-3">
+        <!-- My Transcriptions Button -->
+        <a href="{{ url_for('homepage.my_transcriptions') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-folder-open"></i> My Transcriptions
+        </a>
+        <!-- Transcribe Button -->
+        <a href="{{ url_for('homepage.transcribe') }}" class="btn btn-success btn-lg">
+            <i class="fas fa-microphone"></i> Transcribe
+        </a>
+    </div>
+</div>
 {% endblock %}
