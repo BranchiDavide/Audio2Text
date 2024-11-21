@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect
 from flask_login import login_user, logout_user, login_required, current_user
 from database.connection import db
 from models.user import User
+from utils.apikeyvalidator import generate_api_key
 
 auth = Blueprint("auth", __name__)
 
@@ -91,6 +92,7 @@ def signup_post():
     
     user = User(firstname=firstname, lastname=lastname, email=email, username=username)
     user.set_password(password)
+    user.set_api_key(generate_api_key())
     db.session.add(user)
     db.session.commit()
 

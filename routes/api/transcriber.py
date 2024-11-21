@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from utils.filechecker import *
+from utils.apikeyvalidator import validate_api_key
 import gc
 import os
 import uuid
@@ -21,6 +22,7 @@ def get_all():
     raise NotImplementedError
 
 @transcriber.route("/", methods=["POST"])
+@validate_api_key
 def create():
     # Create a new transcription for an authenticated user
     if "file" not in request.files:
