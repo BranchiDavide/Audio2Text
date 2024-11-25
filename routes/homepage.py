@@ -6,7 +6,8 @@ homepage = Blueprint("homepage", __name__)
 @homepage.route("/")
 def home():
     if current_user.is_authenticated:
-        return render_template("home.html", firstname=current_user.firstname, lastname=current_user.lastname)
+        user_api_key = current_user.get_api_keys().first().value
+        return render_template("home.html", firstname=current_user.firstname, lastname=current_user.lastname, user_api_key=user_api_key)
     else:
         return redirect("/auth/login")
 

@@ -15,4 +15,9 @@
         </a>
     </div>
 </div>
+<script>
+    {% if user_api_key %}
+        localStorage.setItem("apiKey", "{{ user_api_key }}");
+    {% endif %}
+</script>
 {% endblock %}

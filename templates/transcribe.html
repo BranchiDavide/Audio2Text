@@ -22,6 +22,11 @@
             </select>
         </div>
 
+        <div class="mb-3">
+            <label for="titleInput" class="form-label">Title (Optional)</label>
+            <input type="text" class="form-control" id="titleInput" name="title" placeholder="Enter a custom title for your transcription">
+        </div>
+
         <button type="submit" class="btn btn-primary w-100">Transcribe</button>
     </form>
 
@@ -48,17 +53,22 @@ document.getElementById("transcriptionForm").addEventListener("submit", async (e
     
     const formData = new FormData();
     const fileInput = document.getElementById("audioFile");
+    const titleInput = document.getElementById("titleInput");
     const modelSelect = document.getElementById("modelSelect");
     const loadingSpinner = document.getElementById("loadingSpinner");
 
     formData.append("file", fileInput.files[0]);
     formData.append("model", modelSelect.value);
+    formData.append("title", titleInput.value);
     loadingSpinner.classList.remove("d-none");
     document.getElementById("results").classList.add("d-none");
 
     try {
         const response = await fetch("{{ url_for('api.transcriber.create') }}", {
             method: "POST",
+            headers: {
+                "X-API-Key": `${localStorage.getItem("apiKey")}`
+            },
             body: formData
         });
 

@@ -1,10 +1,13 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_from_directory, url_for, g
 from utils.filechecker import *
 from utils.apikeyvalidator import validate_api_key
+from database.connection import db
+from models.transcription import Transcription
 import gc
 import os
 import uuid
 import time
+from datetime import datetime
 
 import whisper
 ALLOWED_MODELS = ["base", "tiny", "small", "medium", "turbo"]
@@ -25,6 +28,7 @@ def get_all():
 @validate_api_key
 def create():
     # Create a new transcription for an authenticated user
+    user = g.get("user")
     if "file" not in request.files:
         return jsonify({"status": "error", "message": "File not found in the request"}), 400
 
@@ -55,6 +59,19 @@ def create():
         transcription = base_model.transcribe(file_path)
     end_time = time.time()
     
+    current_time = datetime.now()
+    formatted_date = current_time.strftime("%d/%m/%Y %H:%M:%S")
+    formatted_date_db = current_time.strftime("%Y/%m/%d-%H:%M:%S")
+    title = f"New transcription, {formatted_date}"
+    if "title" in request.form:
+        title = request.form["title"].strip()
+
+    transcription_db = Transcription(audio_path=url_for("api.transcriber.get_audio", filename=file.filename), text=transcription["text"], user_id=user.id,
+                                     created_at=formatted_date_db, detected_lang=transcription["language"], model=model_name, transcription_time=round(end_time - start_time, 2))
+    transcription_db.set_title(title)
+    db.session.add(transcription_db)
+    db.session.commit()
+
     return jsonify({
                     "status": "success",
                     "transcription": transcription["text"],
@@ -62,3 +79,9 @@ def create():
                     "transcription_time": round(end_time - start_time, 2),
                     "model": model_name
                     }), 200
+
+@transcriber.route("/audio/<filename>")
+@validate_api_key
+def get_audio(filename):
+    #TODO: Check if user is authorized to get audio file, and if file exists
+    return send_from_directory(os.getenv("UPLOAD_FOLDER"), filename)
