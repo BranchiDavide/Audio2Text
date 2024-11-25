@@ -26,7 +26,14 @@
             <label for="titleInput" class="form-label">Title (Optional)</label>
             <input type="text" class="form-control" id="titleInput" name="title" placeholder="Enter a custom title for your transcription">
         </div>
-
+        <div class="form-check form-switch">
+            <input class="form-check-input" id="backgroundSwitch" type="checkbox" role="switch" >
+            <label class="form-check-label">
+                Run transcription in background
+                <i style="transform: scale(1.2); margin-left: 3px;" class="fa-regular fa-circle-question" data-toggle="tooltip" data-placement="right" title="By running the transcription in the background yo will be redirected to homepage. When the transcription is ready you can find it in the &ldquo;My Transcriptions&ldquo; section"></i>
+            </label>
+          </div>
+          <br>
         <button type="submit" class="btn btn-primary w-100">Transcribe</button>
     </form>
 
@@ -52,6 +59,7 @@ document.getElementById("transcriptionForm").addEventListener("submit", async (e
     event.preventDefault();
     
     const formData = new FormData();
+    const backgroundSwitch = document.getElementById("backgroundSwitch");
     const fileInput = document.getElementById("audioFile");
     const titleInput = document.getElementById("titleInput");
     const modelSelect = document.getElementById("modelSelect");
@@ -64,6 +72,18 @@ document.getElementById("transcriptionForm").addEventListener("submit", async (e
     document.getElementById("results").classList.add("d-none");
 
     try {
+        if(backgroundSwitch.checked){
+            fetch("{{ url_for('api.transcriber.create') }}", {
+                method: "POST",
+                headers: {
+                    "X-API-Key": `${localStorage.getItem("apiKey")}`
+                },
+                body: formData
+            });
+            window.location.href = "/";
+            return;
+        }
+
         const response = await fetch("{{ url_for('api.transcriber.create') }}", {
             method: "POST",
             headers: {
@@ -72,6 +92,7 @@ document.getElementById("transcriptionForm").addEventListener("submit", async (e
             body: formData
         });
 
+        console.log("is in")
         const result = await response.json();
 
         if (response.ok) {

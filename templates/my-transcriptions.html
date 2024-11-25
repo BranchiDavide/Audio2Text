@@ -55,6 +55,9 @@
                                     <i class="fa-solid fa-headphones"></i>
                                     Listen to audio
                                 </button>
+                                <button class="btn btn-danger delBtn" data-id="${t.id}">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
                             </div>
                             <hr>
                         `;
@@ -80,6 +83,30 @@
                                 modalAudioPlayer.src = audioBlobUrl;
                             }else{
                                 alert(result.message || "An error occurred while fetching the audio file.");
+                            }
+                        });
+                    }
+
+                    const delBtns = document.getElementsByClassName("delBtn");
+                    for(let btn of delBtns){
+                        btn.addEventListener("click", async (e) => {
+                            if(confirm("Are you sure you want to delete this transcription?")){
+                                const id = btn.getAttribute("data-id");
+                                const response = await fetch(`{{ url_for('api.transcriber.delete') }}`, {
+                                    method: "DELETE",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "X-API-Key": `${localStorage.getItem("apiKey")}`
+                                    },
+                                    body: JSON.stringify({"id": id})
+                                });
+
+                                if(response.ok){
+                                    alert("Transcription deleted successfully.");
+                                    location.reload();
+                                }else{
+                                    alert(result.message || "An error occurred while deleting the transcription.");
+                                }
                             }
                         });
                     }

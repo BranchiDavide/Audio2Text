@@ -29,6 +29,7 @@ def get_all():
     transcriptions_resp = []
     for transcription in transcriptions:
         transcriptions_resp.append({
+            "id": transcription.id,
             "title": transcription.title,
             "created_at": transcription.created_at.strftime("%d/%m/%Y %H:%M:%S"),
             "transcription_time": transcription.transcription_time,
@@ -113,3 +114,23 @@ def get_audio(filename):
         return send_from_directory(os.getenv("UPLOAD_FOLDER"), filename)
     else:
         return jsonify({"status": "error", "message": "Audio file not found"}), 404
+    
+@transcriber.route("/", methods=["DELETE"])
+@validate_api_key
+def delete():
+    # Delete a transcription for an authenticated user
+    transcription_id = request.json.get("id")
+    if not transcription_id:
+        return jsonify({"status": "error", "message": "Transcription ID is required."}), 400
+    user = g.get("user")
+    transcription = Transcription.query.filter_by(id=transcription_id, user_id=user.id).first()
+    if not transcription:
+        return jsonify({"status": "error", "message": "Transcription not found or not owned by the user."}), 404
+    
+    filename = os.path.join(UPLOAD_FOLDER, transcription.audio_path.split('/')[-1])
+    os.remove(filename)
+
+    db.session.delete(transcription)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Transcription deleted successfully."}), 200
