@@ -24,3 +24,10 @@ def transcribe():
         return render_template("transcribe.html")
     else:
         return redirect("/auth/login")
+    
+@homepage.route("my-api-keys")
+def my_api_keys():
+    if current_user.is_authenticated:
+        return render_template("my-api-keys.html", api_keys=current_user.get_api_keys().first().value)
+    else:
+        return redirect("/auth/login")

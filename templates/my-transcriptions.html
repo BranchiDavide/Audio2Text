@@ -35,50 +35,54 @@
             const result = await response.json();
 
             if (response.ok) {
-                for(let t of result.transcriptions){
-                    let divTemplate = `
-                        <div class="list-group-item post-link mb-3">
-                            <h5>${t.title}</h5>
-                            <pre id="transcriptionText" class="p-3 bg-light rounded text-break" style="white-space: pre-wrap;">${t.text.trim()}</pre>
-                            <small>
-                                Creation date: ${t.created_at}
-                            </small>
-                            <div class="mb-2">
-                                <span class="badge bg-info me-2">Detected Language: ${t.detected_lang}</span>
-                                <span class="badge bg-secondary">Time: ${t.transcription_time} seconds</span>
-                                <span class="badge bg-secondary">Model: ${t.model}</span>
+                if(result.transcriptions.length == 0){
+                    document.getElementsByClassName("transcriptions-div")[0].textContent = "You don't have any transcriptions yet."
+                }else{
+                    for(let t of result.transcriptions){
+                        let divTemplate = `
+                            <div class="list-group-item post-link mb-3">
+                                <h5>${t.title}</h5>
+                                <pre id="transcriptionText" class="p-3 bg-light rounded text-break" style="white-space: pre-wrap;">${t.text.trim()}</pre>
+                                <small>
+                                    Creation date: ${t.created_at}
+                                </small>
+                                <div class="mb-2">
+                                    <span class="badge bg-info me-2">Detected Language: ${t.detected_lang}</span>
+                                    <span class="badge bg-secondary">Time: ${t.transcription_time} seconds</span>
+                                    <span class="badge bg-secondary">Model: ${t.model}</span>
+                                </div>
+                                <button class="btn btn-primary audioPlayBtn" data-bs-toggle="modal" data-bs-target="#audioModal" audio-path="${t.audio_path}">
+                                    <i class="fa-solid fa-headphones"></i>
+                                    Listen to audio
+                                </button>
                             </div>
-                            <button class="btn btn-primary audioPlayBtn" data-bs-toggle="modal" data-bs-target="#audioModal" audio-path="${t.audio_path}">
-                                <i class="fa-solid fa-headphones"></i>
-                                Listen to audio
-                            </button>
-                        </div>
-                        <hr>
-                    `;
-                    out += divTemplate;
-                }
-                document.getElementsByClassName("transcriptions-div")[0].innerHTML = out;
+                            <hr>
+                        `;
+                        out += divTemplate;
+                    }
+                    document.getElementsByClassName("transcriptions-div")[0].innerHTML = out;
 
-                const audioPlayBtns = document.getElementsByClassName("audioPlayBtn");
-                for(let btn of audioPlayBtns){
-                    btn.addEventListener("click", async (e) => {
-                        const audioPath = btn.getAttribute("audio-path");
-                        const response = await fetch(audioPath, {
-                            method: "GET",
-                            headers: {
-                                "X-API-Key": `${localStorage.getItem("apiKey")}`
+                    const audioPlayBtns = document.getElementsByClassName("audioPlayBtn");
+                    for(let btn of audioPlayBtns){
+                        btn.addEventListener("click", async (e) => {
+                            const audioPath = btn.getAttribute("audio-path");
+                            const response = await fetch(audioPath, {
+                                method: "GET",
+                                headers: {
+                                    "X-API-Key": `${localStorage.getItem("apiKey")}`
+                                }
+                            });
+
+                            if(response.ok){
+                                const audioBlob = await response.blob();
+                                const audioBlobUrl = URL.createObjectURL(audioBlob);
+
+                                modalAudioPlayer.src = audioBlobUrl;
+                            }else{
+                                alert(result.message || "An error occurred while fetching the audio file.");
                             }
                         });
-
-                        if(response.ok){
-                            const audioBlob = await response.blob();
-                            const audioBlobUrl = URL.createObjectURL(audioBlob);
-
-                            modalAudioPlayer.src = audioBlobUrl;
-                        }else{
-                            alert(result.message || "An error occurred while fetching the audio file.");
-                        }
-                    });
+                    }
                 }
             } else {
                 alert(result.message || "An error occurred while fetching all the transcriptions.");

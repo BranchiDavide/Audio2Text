@@ -102,5 +102,14 @@ def create():
 @transcriber.route("/audio/<filename>")
 @validate_api_key
 def get_audio(filename):
-    #TODO: Check if user is authorized to get audio file, and if file exists
-    return send_from_directory(os.getenv("UPLOAD_FOLDER"), filename)
+    if os.path.isfile(os.path.join(os.getenv("UPLOAD_FOLDER"), filename)):
+        user = g.get("user")
+        audio_path_query = url_for("api.transcriber.get_audio", filename=filename)
+        transcription = Transcription.query.filter_by(audio_path=audio_path_query).first()
+        if not transcription:
+            return jsonify({"status": "error", "message": "Audio file not found"}), 404
+        if transcription.user_id != user.id:
+            return jsonify({"status": "error", "message": "You don't have access to this resource"}), 403
+        return send_from_directory(os.getenv("UPLOAD_FOLDER"), filename)
+    else:
+        return jsonify({"status": "error", "message": "Audio file not found"}), 404
