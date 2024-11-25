@@ -13,8 +13,14 @@ def home():
 
 @homepage.route("my-transcriptions")
 def my_transcriptions():
-    return NotImplementedError
+    if current_user.is_authenticated:
+        return render_template("my-transcriptions.html")
+    else:
+        return redirect("/auth/login")
 
 @homepage.route("transcribe")
 def transcribe():
-    return render_template("transcribe.html")
+    if current_user.is_authenticated:
+        return render_template("transcribe.html")
+    else:
+        return redirect("/auth/login")

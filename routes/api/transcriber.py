@@ -20,9 +20,25 @@ if not os.path.exists(UPLOAD_FOLDER):
 transcriber = Blueprint("transcriber", __name__)
 
 @transcriber.route("/")
+@validate_api_key
 def get_all():
     # Return all the transcriptions of an authenticated user
-    raise NotImplementedError
+    user = g.get("user")
+    transcriptions = Transcription.query.filter_by(user_id=user.id).order_by(Transcription.created_at.desc()).all()
+    response = {"status": "success"}
+    transcriptions_resp = []
+    for transcription in transcriptions:
+        transcriptions_resp.append({
+            "title": transcription.title,
+            "created_at": transcription.created_at.strftime("%d/%m/%Y %H:%M:%S"),
+            "transcription_time": transcription.transcription_time,
+            "text": transcription.text,
+            "audio_path": transcription.audio_path,
+            "detected_lang": transcription.detected_lang,
+            "model": transcription.model
+        })
+    response["transcriptions"] = transcriptions_resp
+    return jsonify(response)
 
 @transcriber.route("/", methods=["POST"])
 @validate_api_key
@@ -64,7 +80,10 @@ def create():
     formatted_date_db = current_time.strftime("%Y/%m/%d-%H:%M:%S")
     title = f"New transcription, {formatted_date}"
     if "title" in request.form:
-        title = request.form["title"].strip()
+        title_value = request.form["title"].strip()
+        if len(title_value) > 0:
+            title = title_value
+
 
     transcription_db = Transcription(audio_path=url_for("api.transcriber.get_audio", filename=file.filename), text=transcription["text"], user_id=user.id,
                                      created_at=formatted_date_db, detected_lang=transcription["language"], model=model_name, transcription_time=round(end_time - start_time, 2))

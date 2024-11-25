@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}My Transcriptions - Audio2Text{% endblock %}
+{% block content %}
+<!-- Modal for playing audio -->
+<div class="modal fade" id="audioModal" tabindex="-1" aria-labelledby="audioModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="audioModalLabel">Play Audio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <audio id="modalAudioPlayer" controls style="width: 100%;">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="list-group-item transcriptions-div mb-3">
+
+</div>
+<script>
+    const modalAudioPlayer = document.getElementById("modalAudioPlayer");
+    window.onload = async() => {
+        let out = "";
+        try {
+            const response = await fetch("{{ url_for('api.transcriber.get_all') }}", {
+                method: "GET",
+                headers: {
+                    "X-API-Key": `${localStorage.getItem("apiKey")}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                for(let t of result.transcriptions){
+                    let divTemplate = `
+                        <div class="list-group-item post-link mb-3">
+                            <h5>${t.title}</h5>
+                            <pre id="transcriptionText" class="p-3 bg-light rounded text-break" style="white-space: pre-wrap;">${t.text.trim()}</pre>
+                            <small>
+                                Creation date: ${t.created_at}
+                            </small>
+                            <div class="mb-2">
+                                <span class="badge bg-info me-2">Detected Language: ${t.detected_lang}</span>
+                                <span class="badge bg-secondary">Time: ${t.transcription_time} seconds</span>
+                                <span class="badge bg-secondary">Model: ${t.model}</span>
+                            </div>
+                            <button class="btn btn-primary audioPlayBtn" data-bs-toggle="modal" data-bs-target="#audioModal" audio-path="${t.audio_path}">
+                                <i class="fa-solid fa-headphones"></i>
+                                Listen to audio
+                            </button>
+                        </div>
+                        <hr>
+                    `;
+                    out += divTemplate;
+                }
+                document.getElementsByClassName("transcriptions-div")[0].innerHTML = out;
+
+                const audioPlayBtns = document.getElementsByClassName("audioPlayBtn");
+                for(let btn of audioPlayBtns){
+                    btn.addEventListener("click", async (e) => {
+                        const audioPath = btn.getAttribute("audio-path");
+                        const response = await fetch(audioPath, {
+                            method: "GET",
+                            headers: {
+                                "X-API-Key": `${localStorage.getItem("apiKey")}`
+                            }
+                        });
+
+                        if(response.ok){
+                            const audioBlob = await response.blob();
+                            const audioBlobUrl = URL.createObjectURL(audioBlob);
+
+                            modalAudioPlayer.src = audioBlobUrl;
+                        }else{
+                            alert(result.message || "An error occurred while fetching the audio file.");
+                        }
+                    });
+                }
+            } else {
+                alert(result.message || "An error occurred while fetching all the transcriptions.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("An unexpected error occurred.");
+        }
+    }
+
+    document.getElementById("audioModal").addEventListener('hidden.bs.modal', function (event) {
+        modalAudioPlayer.pause();
+    });
+</script>
+{% endblock %}
